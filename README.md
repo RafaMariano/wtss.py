@@ -1,2 +1,2 @@
-# wtss.py
-Web Time Series Service for Python
+# Python Client API for Web Time Series Service
+
