@@ -4,25 +4,24 @@
 
 If you want to know more abot WTSS service, visit the [TerraLib GeoWeb Services homepage](https://github.com/e-sensing/tws).
 
-There are also client APIs for other programming languages:
-- **[R](https://github.com/e-sensing/wtss.r)**
-- **[JavaScript](https://github.com/e-sensing/wtss.js)**
-- **[C++](https://github.com/e-sensing/wtss.cxx)**
+There are also client APIs for other programming languages: **[R](https://github.com/e-sensing/wtss.r)**, **[JavaScript](https://github.com/e-sensing/wtss.js)**, and **[C++](https://github.com/e-sensing/wtss.cxx)**.
 
 ## Installing wtss.py
 
 **1.** Open a shell script and go to the folder ```src```.
 
 **2.** In the shell, type:
-```
+```bash
 $ sudo pip install .
 ```
 
-## Using wtss.py`
+That's it!
 
-Import the wtss class and then use it to retrieve the time series as shown in the example:
+## Using wtss.py to retrieve the time series
 
-```
+Import the ```wtss``` class and then use it to create an objet to retrieve the time series as shown in the following example:
+
+```python
 from wtss import wtss
 
 w = wtss("http://www.dpi.inpe.br/tws")
