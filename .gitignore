@@ -1,6 +1,9 @@
 *.autosave
+*.pyc
 *.user
 *.*~
 .DS_Store
 .idea/
+/dist/
+/*.egg-info
 
