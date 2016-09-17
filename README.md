@@ -8,13 +8,24 @@ There are also client APIs for other programming languages: **[R](https://github
 
 ## Installing wtss.py
 
+Please, open a shell script and try:
+```bash
+sudo pip install wtss
+```
+
+or
+```bash
+sudo easy_install wtss
+```
+
+## Building and installing wtss.py from source
+
 **1.** Open a shell script and go to the folder ```src```.
 
 **2.** In the shell, type:
 ```bash
 $ sudo pip install .
 ```
-
 That's it!
 
 ## Using wtss.py to retrieve the time series
