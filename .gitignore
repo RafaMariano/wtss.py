@@ -2,8 +2,9 @@
 *.pyc
 *.user
 *.*~
+*.egg-info
 .DS_Store
 .idea/
 /dist/
-/*.egg-info
+
 
