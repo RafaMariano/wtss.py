@@ -19,4 +19,6 @@
 #  e-sensing team at <esensning-team@dpi.inpe.br>.
 #
 
+"""Python Client API for Web Time Series Services (WTSS)."""
 from .wtss import wtss
+
