@@ -19,23 +19,48 @@
 #  e-sensing team at <esensning-team@dpi.inpe.br>.
 #
 
+import numpy
+import matplotlib.pyplot as pyplot
+import matplotlib.ticker as ticker
 from wtss import wtss
 
+# The WTSS service is at: http://www.dpi.inpe.br/tws
 w = wtss("http://www.dpi.inpe.br/tws")
 
-cv_list = w.list_coverages()
+# retrieve the time series for location (-54, -12)
+ts = w.time_series("mod13q1_512", ["red", "nir"], -12.0, -54.0, start_date="2000-02-18", end_date="2006-01-01")
 
-for cv_name in cv_list["coverages"]:
-    print(cv_name)
+# get the list of values for the red time series
+red_values = wtss.values(ts, "red")
 
-if not ("mod13q1_512" in cv_list["coverages"]):
-    raise SystemExit("Coverage 'mod13q1_512' is not in the server list!")
+# get the date list
+timeline = wtss.timeline(ts, "%Y-%m-%d")
 
-cv_scheme = w.describe_coverage("mod13q1_512")
+# prepare chart parameters
+num_values = len(red_values)
 
-print(cv_scheme)
+# create an evenly spaced array of values within interval: [0, num_values)
+indices = numpy.arange(num_values)
 
-ts = w.time_series("mod13q1_512", ["red", "nir"], -12.0, -54.0)
+# callback
+def format_date(x, pos = None):
+    idx = numpy.clip(int(x + 0.5), 0, num_values - 1)
 
-print(ts)
+    d = timeline[idx]
+
+    sd = d.strftime("%d-%m-%Y")
+
+    return sd
+
+fig, ax = pyplot.subplots()
+
+ax.plot(indices, red_values, 'o-')
+
+ax.xaxis.set_major_formatter(ticker.FuncFormatter(format_date))
+
+fig.autofmt_xdate()
+
+pyplot.show()
+
+
 

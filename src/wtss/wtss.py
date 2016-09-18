@@ -19,6 +19,7 @@
 #  e-sensing team at <esensning-team@dpi.inpe.br>.
 #
 
+from datetime import datetime
 import json
 import urllib2
 
@@ -94,8 +95,14 @@ class wtss:
             ebd_date(str, optional): end date.
 
         Raises:
-            ValueError: if latitude or longitude is out of range.
+            ValueError: if latitude or longitude is out of range or any mandatory parameter is missing.
         """
+
+        if not cv_name:
+            raise ValueError("Missing coverage name.")
+
+        if not attributes:
+            raise ValueError("Missing coverage attributes.")
 
         if (latitude < -90.0) or (latitude > 90.0):
             raise ValueError('latitude is out-of range!')
@@ -117,3 +124,43 @@ class wtss:
         doc = resource.read()
 
         return json.loads(doc)
+
+    @classmethod
+    def timeline(cls, doc, fmt):
+        """Returns the timeline from a time_series JSON document response as a list of dates.
+
+        Args:
+            doc (dict): a dictionary from a time_series JSON document response.
+            fmt (str): the format date (e.g. `"%Y-%m-%d`").
+
+        Returns:
+            list: the timeline from a time_series response as a date list.
+        """
+        str_timeline = doc["result"]["timeline"]
+
+        date_timeline = [datetime.strptime(t, fmt).date() for t in str_timeline]
+
+        return date_timeline
+
+    @classmethod
+    def values(cls, doc, attr_name):
+        """Returns the time series values for the given attribute from a time_series JSON document response.
+
+        Args:
+            doc (dict): a dictionary from a time_series JSON document response.
+            attr_name (str): the name of the attribute to retrieve its a time series.
+
+        Returns:
+            list: the time series for the given attribute.
+
+        Raises:
+            ValueError: if attribute name is not in the document.
+        """
+
+        attrs = doc["result"]["attributes"]
+
+        for attr in attrs:
+            if attr["attribute"] == attr_name:
+                return attr["values"]
+
+        raise ValueError("Time series for attribute '{0}' not found!".format(attr_name))
