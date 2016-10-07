@@ -23,6 +23,7 @@ from datetime import datetime
 import json
 import urllib2
 
+
 class wtss:
     """This class implement the WTSS API for Python.
 
@@ -82,17 +83,17 @@ class wtss:
         """
         return self._request("%s/wtss/describe_coverage?name=%s" % (self.host, cv_name))
 
-    def time_series(self, cv_name, attributes, latitude, longitude, start_date = None, end_date = None):
+    def time_series(self, cv_name, attributes, latitude, longitude, start_date=None, end_date=None):
         """Retrieve the time series for a given location and time interval.
 
         Args:
 
             cv_name (str): the coverage name whose time serie you are interested in.
-            attributes(list): the list of attributes you are interested in to have the time series.
+            attributes(list, tuple, str): the list, tuple or string of attributes you are interested in to have the time series.
             latitude(double): latitude in degrees with the datum WGS84 (EPSG 4326).
             longitude(double): longitude in degrees with the datum WGS84 (EPSG 4326).
             start_date(str, optional): start date.
-            ebd_date(str, optional): end date.
+            end_date(str, optional): end date.
 
         Raises:
             ValueError: if latitude or longitude is out of range or any mandatory parameter is missing.
@@ -104,13 +105,19 @@ class wtss:
         if not attributes:
             raise ValueError("Missing coverage attributes.")
 
+        if type(attributes) in [list, tuple]:
+            attributes = ",".join(attributes)
+        elif not type(attributes) is str:
+            raise ValueError('attributes must be a list, tuple or string')
+
         if (latitude < -90.0) or (latitude > 90.0):
             raise ValueError('latitude is out-of range!')
 
         if (longitude < -180.0) or (longitude > 180.0):
             raise ValueError('longitude is out-of range!')
 
-        query_str = "%s/wtss/time_series?coverage=%s&attributes=%s&latitude=%f&longitude=%f" % (self.host, cv_name, ",".join(attributes), latitude, longitude)
+        query_str = "%s/wtss/time_series?coverage=%s&attributes=%s&latitude=%f&longitude=%f" % \
+                    (self.host, cv_name, attributes, latitude, longitude)
 
         if start_date and end_date:
             query_str += "&start=%s&end=%s" % (start_date, end_date)
