@@ -16,7 +16,7 @@
 #
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Web Time Series Service for Python. See LICENSE. If not, write to
-#  e-sensing team at <esensning-team@dpi.inpe.br>.
+#  e-sensing team at <esensing-team@dpi.inpe.br>.
 #
 
 from datetime import datetime
@@ -25,25 +25,17 @@ import urllib2
 
 
 class wtss:
-    """This class implement the WTSS API for Python.
+    """This class implements the WTSS API for Python. See https://github.com/e-sensing/eows for more information on WTSS.
 
     Example:
 
-        The code snippet below shows how to retrive a time series for location (-12, -54)::
+        The code snippet below shows how to retrieve a time series for location (latitude = -12, longitude = -54):
 
             from wtss import wtss
 
             w = wtss("http://www.dpi.inpe.br/tws")
 
-            cv_list = w.list_coverages()
-
-            print(cv_list)
-
-            cv_scheme = w.describe_coverage("mod13q1_512")
-
-            print(cv_scheme)
-
-            ts = w.time_series("mod13q1_512", ["red", "nir"], -12.0, -54.0, "", "")
+            ts = w.time_series(coverage = "mod13q1_512", attributes = ["red", "nir"], latitude = -12.0, longitude = -54.0)
 
             print(ts)
 
@@ -51,6 +43,7 @@ class wtss:
 
         host (str): the WTSS server URL.
     """
+
 
     def __init__(self, host):
         """Create a WTSS client attached to the given host address (an URL).
@@ -60,6 +53,7 @@ class wtss:
         """
         self.host = host
 
+
     def list_coverages(self):
         """Returns the list of all available coverages in the service.
 
@@ -67,10 +61,11 @@ class wtss:
             dict: with a single key/value pair.
 
             The key named 'coverages' is associated to a list of str:
-            { 'coverges' : ['cv1', 'cv2', ... 'cvn'] }
+            { 'coverages' : ['cv1', 'cv2', ..., 'cvn'] }
 
         """
         return self._request("%s/wtss/list_coverages" % self.host)
+
 
     def describe_coverage(self, cv_name):
         """Returns the metadata of a given coverage.
@@ -83,12 +78,13 @@ class wtss:
         """
         return self._request("%s/wtss/describe_coverage?name=%s" % (self.host, cv_name))
 
-    def time_series(self, cv_name, attributes, latitude, longitude, start_date=None, end_date=None):
+
+    def time_series(self, coverage, attributes, latitude, longitude, start_date=None, end_date=None):
         """Retrieve the time series for a given location and time interval.
 
         Args:
 
-            cv_name (str): the coverage name whose time serie you are interested in.
+            coverage (str): the coverage name whose time series you are interested in.
             attributes(list, tuple, str): the list, tuple or string of attributes you are interested in to have the time series.
             latitude(double): latitude in degrees with the datum WGS84 (EPSG 4326).
             longitude(double): longitude in degrees with the datum WGS84 (EPSG 4326).
@@ -99,7 +95,7 @@ class wtss:
             ValueError: if latitude or longitude is out of range or any mandatory parameter is missing.
         """
 
-        if not cv_name:
+        if not coverage:
             raise ValueError("Missing coverage name.")
 
         if not attributes:
@@ -117,12 +113,24 @@ class wtss:
             raise ValueError('longitude is out-of range!')
 
         query_str = "%s/wtss/time_series?coverage=%s&attributes=%s&latitude=%f&longitude=%f" % \
-                    (self.host, cv_name, attributes, latitude, longitude)
+                    (self.host, coverage, attributes, latitude, longitude)
 
-        if start_date and end_date:
-            query_str += "&start=%s&end=%s" % (start_date, end_date)
+        if start_date:
+            query_str += "&start_date={}".format(start_date)
 
-        return self._request(query_str)
+        if end_date:
+            query_str += "&end_date={}".format(end_date)
+
+        doc = self._request(query_str)
+
+        tl = doc["result"]["timeline"]
+
+        tl = self._timeline(tl, "%Y-%m-%d")
+
+        doc["result"]["timeline"] = tl
+
+        return time_series(doc)
+
 
     def _request(self, uri):
 
@@ -132,22 +140,22 @@ class wtss:
 
         return json.loads(doc)
 
+
     @classmethod
-    def timeline(cls, doc, fmt):
-        """Returns the timeline from a time_series JSON document response as a list of dates.
+    def _timeline(cls, tl, fmt):
+        """Convert a timeline from a string list to a Python datetime list.
 
         Args:
-            doc (dict): a dictionary from a time_series JSON document response.
+            tl (list): a list of strings from a time_series JSON document response.
             fmt (str): the format date (e.g. `"%Y-%m-%d`").
 
         Returns:
-            list: the timeline from a time_series response as a date list.
+            list (datetime): a timeline with datetime values.
         """
-        str_timeline = doc["result"]["timeline"]
-
-        date_timeline = [datetime.strptime(t, fmt).date() for t in str_timeline]
+        date_timeline = [datetime.strptime(t, fmt).date() for t in tl]
 
         return date_timeline
+
 
     @classmethod
     def values(cls, doc, attr_name):
@@ -171,3 +179,71 @@ class wtss:
                 return attr["values"]
 
         raise ValueError("Time series for attribute '{0}' not found!".format(attr_name))
+
+
+class time_series:
+    """This class is a proxy for the result of a time_series query in WTSS.
+
+    Example:
+
+        The code snippet below shows how to retrieve a time series for location (latitude = -12, longitude = -54):
+
+            from wtss import wtss
+
+            w = wtss("http://www.dpi.inpe.br/tws")
+
+            ts = w.time_series(coverage = "mod13q1_512", attributes = ["red", "nir"], latitude = -12.0, longitude = -54.0)
+
+            print(ts["red"])
+
+            print(ts["nir"])
+
+            print(ts.timeline())
+
+
+    Attributes:
+
+        attributes (list): the list of attributes from a time_series query to a WTSS server.
+        timeline (list): the timeline from a time_series query to a WTSS server.
+    """
+
+
+    def __init__(self, ts):
+        """Initializes a timeseries object from a WTSS time_series query.
+
+        Args:
+            ts (dict): a response from a time_series query to a WTSS server.
+        """
+
+        self.doc = ts
+
+        self.attributes = {}
+
+        for attr in ts["result"]["attributes"]:
+            name = attr["attribute"]
+            values = attr["values"]
+            self.attributes[name] = values
+
+        self.timeline = ts["result"]["timeline"]
+
+
+    def __getitem__(self, item):
+        """Returns the list of values for a given attribute.
+
+        Args:
+            item (str): the name of an attribute.
+
+        Returns:
+            (list): values.
+        """
+        return self.attributes[item]
+
+
+    def attributes(self):
+        """Returns a list with attribute names.
+
+        Returns:
+            (list): a list of strings with the attribute names.
+        """
+
+        return self.attributes.keys()

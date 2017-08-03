@@ -16,7 +16,7 @@
 #
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Web Time Series Service for Python. See LICENSE. If not, write to
-#  e-sensing team at <esensning-team@dpi.inpe.br>.
+#  e-sensing team at <esensing-team@dpi.inpe.br>.
 #
 
 import numpy
@@ -28,16 +28,10 @@ from wtss import wtss
 w = wtss("http://www.dpi.inpe.br/tws")
 
 # retrieve the time series for location (-54, -12)
-ts = w.time_series("mod13q1_512", ["red", "nir"], -12.0, -54.0, start_date="2000-02-18", end_date="2006-01-01")
-
-# get the list of values for the red time series
-red_values = wtss.values(ts, "red")
-
-# get the date list
-timeline = wtss.timeline(ts, "%Y-%m-%d")
+ts = w.time_series("mod13q1_512", "red", -12.0, -54.0, start_date="2000-02-18", end_date="2006-01-01")
 
 # prepare chart parameters
-num_values = len(red_values)
+num_values = len(ts.timeline)
 
 # create an evenly spaced array of values within interval: [0, num_values)
 indices = numpy.arange(num_values)
@@ -46,7 +40,7 @@ indices = numpy.arange(num_values)
 def format_date(x, pos = None):
     idx = numpy.clip(int(x + 0.5), 0, num_values - 1)
 
-    d = timeline[idx]
+    d = ts.timeline[idx]
 
     sd = d.strftime("%d-%m-%Y")
 
@@ -54,7 +48,7 @@ def format_date(x, pos = None):
 
 fig, ax = pyplot.subplots()
 
-ax.plot(indices, red_values, 'o-')
+ax.plot(indices, ts["red"], 'o-')
 
 ax.xaxis.set_major_formatter(ticker.FuncFormatter(format_date))
 

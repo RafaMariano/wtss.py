@@ -16,7 +16,7 @@
 #
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Web Time Series Service for Python. See LICENSE. If not, write to
-#  e-sensing team at <esensning-team@dpi.inpe.br>.
+#  e-sensing team at <esensing-team@dpi.inpe.br>.
 #
 
 from wtss import wtss
@@ -35,7 +35,11 @@ cv_scheme = w.describe_coverage("mod13q1_512")
 
 print(cv_scheme)
 
-ts = w.time_series("mod13q1_512", ["red", "nir"], -12.0, -54.0)
+ts = w.time_series("mod13q1_512", ("red", "nir"), -12.0, -54.0)
 
-print(ts)
+print(ts["red"])
+
+print(ts["nir"])
+
+print(ts.timeline)
 

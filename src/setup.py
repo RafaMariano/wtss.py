@@ -16,13 +16,13 @@
 #
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Web Time Series Service for Python. See LICENSE. If not, write to
-#  e-sensing team at <esensning-team@dpi.inpe.br>.
+#  e-sensing team at <esensing-team@dpi.inpe.br>.
 #
 
 from setuptools import setup
 
 setup(name='wtss',
-      version='0.3.0',
+      version='0.4.0',
       description='Python Client API for Web Time Series Service',
       url='https://github.com/e-sensing/wtss.py',
       author='Gilberto Ribeiro de Queiroz',

@@ -16,27 +16,20 @@
 #
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Web Time Series Service for Python. See LICENSE. If not, write to
-#  e-sensing team at <esensning-team@dpi.inpe.br>.
+#  e-sensing team at <esensing-team@dpi.inpe.br>.
 #
 
 import matplotlib.pyplot as pyplot
 from wtss import wtss
 
-# The WTSS service is at: http://www.dpi.inpe.br/tws
 w = wtss("http://www.dpi.inpe.br/tws")
 
-# retrieve the time series for location (-54, -12)
-ts = w.time_series("mod13q1_512", ["red", "nir"], -12.0, -54.0, start_date="2000-02-18", end_date="2006-01-01")
-
-# get the list of values for the red time series
-red_values = wtss.values(ts, "red")
-
-# get the date list
-timeline = wtss.timeline(ts, "%Y-%m-%d")
+# retrieve the time series for location (-54, -12) in the time interval [2000-02-18, 2000-12-31]
+ts = w.time_series("mod13q1_512", ["red", "nir"], latitude=-12.0, longitude=-54.0, start_date="2000-02-18", end_date="2000-12-31")
 
 fig, ax = pyplot.subplots()
 
-ax.plot(timeline, red_values, '-')
+ax.plot(ts.timeline, ts["red"], '-')
 
 fig.autofmt_xdate()
 
