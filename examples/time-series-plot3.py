@@ -27,7 +27,7 @@ from wtss import wtss
 w = wtss("http://www.dpi.inpe.br/tws")
 
 # retrieve the time series for location (-54, -12)
-ts = w.time_series("mod13q1_512", "red", -12.0, -54.0, start_date="2000-02-18", end_date="2006-01-01")
+ts = w.time_series("mod13q1_512", "red", -12.0, -54.0, start_date="2001-01-01", end_date="2001-12-31")
 
 fig, ax = pyplot.subplots()
 
