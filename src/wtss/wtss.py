@@ -21,7 +21,13 @@
 
 from datetime import datetime
 import json
-import urllib2
+
+try:
+    # For Python 3.0 and later
+    from urllib.request import urlopen
+except ImportError:
+    # Fall back to Python 2's urllib2
+    from urllib2 import urlopen
 
 
 class wtss:
@@ -134,9 +140,9 @@ class wtss:
 
     def _request(self, uri):
 
-        resource = urllib2.urlopen(uri)
+        resource = urlopen(uri)
 
-        doc = resource.read()
+        doc = resource.read().decode('utf-8')
 
         return json.loads(doc)
 
@@ -247,3 +253,7 @@ class time_series:
         """
 
         return self.attributes.keys()
+
+
+    def keys():
+
