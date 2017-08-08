@@ -123,6 +123,9 @@ class wtss:
 
         doc = self._request(query_str)
 
+        if 'exception' in doc: 
+            raise Exception(doc["exception"])
+
         tl = doc["result"]["timeline"]
 
         tl = self._timeline(tl, "%Y-%m-%d")
