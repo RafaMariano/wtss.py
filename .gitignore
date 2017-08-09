@@ -6,6 +6,7 @@
 .DS_Store
 .idea/
 */dist/
-
-
+src/build/
+src/dist/
+src/wtss.egg-info
 
