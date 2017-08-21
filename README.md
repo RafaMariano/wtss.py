@@ -2,9 +2,9 @@
 
 **WTSS** is a lightweight web service for handling remote sensing imagery as time series. Given a location and a time interval you can retrieve the according time series as a Python list of real values.
 
-If you want to know more about WTSS service, visit the [Earth Observation Web Services homepage](https://github.com/e-sensing/eows).
+If you want to know more about WTSS service, visit the [Earth Observation Web Services homepage](https://github.com/e-sensing/eows) and the [WTSS specification](https://github.com/e-sensing/eows/blob/master/doc/wtss.md).
 
-There are also client APIs for other programming languages: **[R](https://github.com/e-sensing/wtss.r)**, **[JavaScript](https://github.com/e-sensing/wtss.js)**, and **[C++](https://github.com/e-sensing/wtss.cxx)**.
+There are also client APIs for other programming languages: **[R](https://github.com/e-sensing/wtss)**, **[JavaScript](https://github.com/e-sensing/wtss.js)**, and **[C++](https://github.com/e-sensing/wtss.cxx)**.
 
 ## Installing wtss.py
 
