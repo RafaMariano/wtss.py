@@ -22,7 +22,7 @@
 from setuptools import setup
 
 setup(name='wtss',
-      version='0.4.0',
+      version='0.5.0',
       description='Python Client API for Web Time Series Service',
       url='https://github.com/e-sensing/wtss.py',
       author='Gilberto Ribeiro de Queiroz',

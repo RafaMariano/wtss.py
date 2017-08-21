@@ -34,7 +34,7 @@ if not ("mod13q1_512" in cv_list["coverages"]):
 cv_scheme = w.describe_coverage("mod13q1_512")
 
 print(cv_scheme)
-
+print(cv_scheme['attributes']['red'])
 ts = w.time_series("mod13q1_512", ("red", "nir"), -12.0, -54.0)
 
 print(ts["red"])

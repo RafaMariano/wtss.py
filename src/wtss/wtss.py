@@ -82,7 +82,12 @@ class wtss:
         Returns:
             dict: a JSON document with some metadata about the informed coverage.
         """
-        return self._request("%s/wtss/describe_coverage?name=%s" % (self.host, cv_name))
+        result = self._request("%s/wtss/describe_coverage?name=%s" % (self.host, cv_name))
+        attrs = dict()
+        for attr in result['attributes']:
+                attrs[attr['name']] = attr
+        result['attributes'] = attrs
+        return result
 
 
     def time_series(self, coverage, attributes, latitude, longitude, start_date=None, end_date=None):
@@ -99,6 +104,7 @@ class wtss:
 
         Raises:
             ValueError: if latitude or longitude is out of range or any mandatory parameter is missing.
+            Exception: if the service returns a expcetion
         """
 
         if not coverage:
@@ -216,24 +222,23 @@ class time_series:
         timeline (list): the timeline from a time_series query to a WTSS server.
     """
 
-
-    def __init__(self, ts):
+    def __init__(self, time_series):
         """Initializes a timeseries object from a WTSS time_series query.
 
         Args:
-            ts (dict): a response from a time_series query to a WTSS server.
+            time_series (dict): a response from a time_series query to a WTSS server.
         """
 
-        self.doc = ts
+        self.doc = time_series
 
         self.attributes = {}
 
-        for attr in ts["result"]["attributes"]:
+        for attr in time_series["result"]["attributes"]:
             name = attr["attribute"]
             values = attr["values"]
             self.attributes[name] = values
 
-        self.timeline = ts["result"]["timeline"]
+        self.timeline = time_series["result"]["timeline"]
 
 
     def __getitem__(self, item):
