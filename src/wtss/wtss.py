@@ -104,6 +104,7 @@ class wtss:
 
         Raises:
             ValueError: if latitude or longitude is out of range or any mandatory parameter is missing.
+            Exception: if the service returns a expcetion
         """
 
         if not coverage:
@@ -225,7 +226,7 @@ class time_series:
         """Initializes a timeseries object from a WTSS time_series query.
 
         Args:
-            ts (dict): a response from a time_series query to a WTSS server.
+            time_series (dict): a response from a time_series query to a WTSS server.
         """
 
         self.doc = time_series
