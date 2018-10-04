@@ -19,15 +19,24 @@
 #  e-sensing team at <esensing-team@dpi.inpe.br>.
 #
 
-from datetime import datetime
+import geojson
 import json
+import shapely.wkt
+import shapely.geometry
+from datetime import datetime
+from .time_series import time_series
+from .time_series_collection import time_series_collection
 
 try:
     # For Python 3.0 and later
     from urllib.request import urlopen
+    from urllib import parse, request
+
+
 except ImportError:
     # Fall back to Python 2's urllib2
-    from urllib2 import urlopen
+    from urllib2 import urlopen, parse, quote
+
 
 
 class wtss:
@@ -50,7 +59,6 @@ class wtss:
         host (str): the WTSS server URL.
     """
 
-
     def __init__(self, host):
         """Create a WTSS client attached to the given host address (an URL).
 
@@ -58,7 +66,6 @@ class wtss:
             host (str): the server URL.
         """
         self.host = host
-
 
     def list_coverages(self):
         """Returns the list of all available coverages in the service.
@@ -72,7 +79,6 @@ class wtss:
         """
         return self._request("%s/wtss/list_coverages" % self.host)
 
-
     def describe_coverage(self, cv_name):
         """Returns the metadata of a given coverage.
 
@@ -85,20 +91,20 @@ class wtss:
         result = self._request("%s/wtss/describe_coverage?name=%s" % (self.host, cv_name))
         attrs = dict()
         for attr in result['attributes']:
-                attrs[attr['name']] = attr
+            attrs[attr['name']] = attr
         result['attributes'] = attrs
         return result
 
-
-    def time_series(self, coverage, attributes, latitude, longitude, start_date=None, end_date=None):
+    def time_series(self, coverage, attributes, wkt=None, latitude=None, longitude=None, start_date=None, end_date=None):
         """Retrieve the time series for a given location and time interval.
 
         Args:
 
             coverage (str): the coverage name whose time series you are interested in.
             attributes(list, tuple, str): the list, tuple or string of attributes you are interested in to have the time series.
-            latitude(double): latitude in degrees with the datum WGS84 (EPSG 4326).
-            longitude(double): longitude in degrees with the datum WGS84 (EPSG 4326).
+            wkt(str, optional if (latitude != None or longitude != None)): well-know text that represents a geometry.
+            latitude(double, optional if (wkt != None)): latitude in degrees with the datum WGS84 (EPSG 4326).
+            longitude(double, optional if (wkt != None)): longitude in degrees with the datum WGS84 (EPSG 4326).
             start_date(str, optional): start date.
             end_date(str, optional): end date.
 
@@ -106,6 +112,8 @@ class wtss:
             ValueError: if latitude or longitude is out of range or any mandatory parameter is missing.
             Exception: if the service returns a expcetion
         """
+
+        data = {}
 
         if not coverage:
             raise ValueError("Missing coverage name.")
@@ -118,14 +126,57 @@ class wtss:
         elif not type(attributes) is str:
             raise ValueError('attributes must be a list, tuple or string')
 
-        if (latitude < -90.0) or (latitude > 90.0):
-            raise ValueError('latitude is out-of range!')
+        data["coverage"] = coverage
+        data["attributes"] = attributes
 
-        if (longitude < -180.0) or (longitude > 180.0):
-            raise ValueError('longitude is out-of range!')
+        if latitude is None or longitude is None:
+            if wkt is None:
+                raise ValueError('Necessary a geometry!!! Wkt or coordinates')
+            else:
+                if isinstance(wkt, str):
+                    wkt_ = shapely.wkt.loads(wkt)
+                # elif isinstance(wkt, shapely.geometry.base.BaseGeometry):
+                else:
+                    wkt_ = wkt
+        else:
+            if (latitude < -90.0) or (latitude > 90.0):
+                raise ValueError("latitude is out-of range!")
 
+            if (longitude < -180.0) or (longitude > 180.0):
+                raise ValueError("longitude is out-of range!")
+
+            wkt_ = shapely.wkt.loads('POINT ( ' + str(latitude) + ' ' + str(longitude) + ' )')
+
+        geojson_ = geojson.Feature(geometry=wkt_, properties={})
+        data["geometry"] = geojson_["geometry"]
+
+        coord = data["geometry"]["coordinates"]
+        time_series_ = []
+
+        if data["geometry"]["type"] == "Polygon":
+            coord = coord[0]
+
+        elif data["geometry"]["type"] == "Point":
+            coord = [coord]
+
+        for point in coord:
+            doc = self._prepare_request(self.host ,coverage, attributes, point, start_date, end_date)
+
+            tl = doc["result"]["timeline"]
+            tl = self._timeline(tl, "%Y-%m-%d")
+
+            doc["result"]["timeline"] = tl
+            time_series_.append(doc)
+
+        if len(time_series_) > 1:
+            return time_series_collection(time_series_)
+
+        return time_series(time_series_[0])
+
+    @classmethod
+    def _prepare_request(cls, host, coverage, attributes, point, start_date, end_date):
         query_str = "%s/wtss/time_series?coverage=%s&attributes=%s&latitude=%f&longitude=%f" % \
-                    (self.host, coverage, attributes, latitude, longitude)
+                    (host, coverage, attributes, point[0], point[1])
 
         if start_date:
             query_str += "&start_date={}".format(start_date)
@@ -133,28 +184,22 @@ class wtss:
         if end_date:
             query_str += "&end_date={}".format(end_date)
 
-        doc = self._request(query_str)
+        doc = cls._request(query_str)
 
-        if 'exception' in doc: 
+        if 'exception' in doc:
             raise Exception(doc["exception"])
 
-        tl = doc["result"]["timeline"]
+        return doc
 
-        tl = self._timeline(tl, "%Y-%m-%d")
+    @classmethod
+    def _request(cls, uri, data=None):
 
-        doc["result"]["timeline"] = tl
-
-        return time_series(doc)
-
-
-    def _request(self, uri):
-
+        if data is not None:
+            uri = request.Request(uri, data=str.encode(data))
         resource = urlopen(uri)
 
         doc = resource.read().decode('utf-8')
-
         return json.loads(doc)
-
 
     @classmethod
     def _timeline(cls, tl, fmt):
@@ -171,7 +216,6 @@ class wtss:
 
         return date_timeline
 
-
     @classmethod
     def values(cls, doc, attr_name):
         """Returns the time series values for the given attribute from a time_series JSON document response.
@@ -187,78 +231,9 @@ class wtss:
             ValueError: if attribute name is not in the document.
         """
 
-        attrs = doc["result"]["attributes"]
+        attrs = doc["properties"]["time_series"]
 
-        for attr in attrs:
-            if attr["attribute"] == attr_name:
-                return attr["values"]
+        if attrs[attr_name] is None:
+            raise ValueError("Time series for attribute '{0}' not found!".format(attr_name))
 
-        raise ValueError("Time series for attribute '{0}' not found!".format(attr_name))
-
-
-class time_series:
-    """This class is a proxy for the result of a time_series query in WTSS.
-
-    Example:
-
-        The code snippet below shows how to retrieve a time series for location (latitude = -12, longitude = -54):
-
-            from wtss import wtss
-
-            w = wtss("http://www.dpi.inpe.br/tws")
-
-            ts = w.time_series(coverage = "mod13q1_512", attributes = ["red", "nir"], latitude = -12.0, longitude = -54.0)
-
-            print(ts["red"])
-
-            print(ts["nir"])
-
-            print(ts.timeline())
-
-
-    Attributes:
-
-        attributes (list): the list of attributes from a time_series query to a WTSS server.
-        timeline (list): the timeline from a time_series query to a WTSS server.
-    """
-
-    def __init__(self, time_series):
-        """Initializes a timeseries object from a WTSS time_series query.
-
-        Args:
-            time_series (dict): a response from a time_series query to a WTSS server.
-        """
-
-        self.doc = time_series
-
-        self.attributes = {}
-
-        for attr in time_series["result"]["attributes"]:
-            name = attr["attribute"]
-            values = attr["values"]
-            self.attributes[name] = values
-
-        self.timeline = time_series["result"]["timeline"]
-
-
-    def __getitem__(self, item):
-        """Returns the list of values for a given attribute.
-
-        Args:
-            item (str): the name of an attribute.
-
-        Returns:
-            (list): values.
-        """
-        return self.attributes[item]
-
-
-    def attributes(self):
-        """Returns a list with attribute names.
-
-        Returns:
-            (list): a list of strings with the attribute names.
-        """
-
-        return self.attributes.keys()
-
+        return attrs[attr_name]
