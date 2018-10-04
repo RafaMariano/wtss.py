@@ -9,4 +9,5 @@
 src/build/
 src/dist/
 src/wtss.egg-info
+src/test
 
